@@ -115,8 +115,10 @@ def edge_decision(type, alphas, selected_idxs, candidate_flags, probs_history, e
       (epoch - args.warmup_dec_epoch) % args.decision_freq == 0:
     masked_score = torch.min(score,
                               (2 * candidate_flags.float() - 1) * np.inf)
-    # selected_edge_idx = torch.argmax(masked_score)
-    selected_edge_idx = random.randint(0, 13)
+
+    # cut strategy
+    selected_edge_idx = torch.argmax(masked_score)
+    # selected_edge_idx = random.randint(0, 13)
     selected_op_idx = torch.argmax(probs[selected_edge_idx]) + 1 # add 1 since none op
     selected_idxs[selected_edge_idx] = selected_op_idx
 
