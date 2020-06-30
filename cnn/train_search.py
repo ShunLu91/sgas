@@ -6,6 +6,7 @@ import math
 import numpy as np
 import torch
 import utils
+import random
 import logging
 import argparse
 import torch.nn as nn
@@ -51,7 +52,7 @@ parser.add_argument('--history_size', type=int, default=4, help='number of store
 parser.add_argument('--post_val', action='store_true', default=False, help='validate after each decision')
 args = parser.parse_args()
 
-args.save = 'search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
+args.save = 'exp/search-{}-{}'.format(args.save, time.strftime("%Y%m%d-%H%M%S"))
 utils.create_exp_dir(args.save, scripts_to_save=glob.glob('*.py'))
 
 log_format = '%(asctime)s %(message)s'
@@ -114,7 +115,8 @@ def edge_decision(type, alphas, selected_idxs, candidate_flags, probs_history, e
       (epoch - args.warmup_dec_epoch) % args.decision_freq == 0:
     masked_score = torch.min(score,
                               (2 * candidate_flags.float() - 1) * np.inf)
-    selected_edge_idx = torch.argmax(masked_score)
+    # selected_edge_idx = torch.argmax(masked_score)
+    selected_edge_idx = random.randint(0, 13)
     selected_op_idx = torch.argmax(probs[selected_edge_idx]) + 1 # add 1 since none op
     selected_idxs[selected_edge_idx] = selected_op_idx
 
