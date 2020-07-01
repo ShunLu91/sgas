@@ -65,7 +65,8 @@ logging.getLogger().addHandler(fh)
 writer = SummaryWriter(log_dir=args.save, max_queue=50)
 
 CIFAR_CLASSES = 10
-select_list = [i for i in range(14)]
+select_normal = [i for i in range(14)]
+select_reduce = [i for i in range(14)]
 
 def histogram_average(history, probs):
   histogram_inter = torch.zeros(probs.shape[0], dtype=torch.float).cuda()
@@ -101,7 +102,7 @@ def edge_decision(type, alphas, selected_idxs, candidate_flags, probs_history, e
     histogram_inter = histogram_average(probs_history, probs)
     # logging.info(type + " histogram intersection average {}".format(histogram_inter))
     probs_history.append(probs)
-    if (len(probs_history) > args.history_size):
+    if len(probs_history) > args.history_size:
       probs_history.pop(0)
 
     score = utils.normalize(importance) * utils.normalize(
@@ -120,20 +121,25 @@ def edge_decision(type, alphas, selected_idxs, candidate_flags, probs_history, e
     # cut strategy
     # selected_edge_idx = torch.argmax(masked_score)
     # selected_edge_idx = random.randint(0, 13)
-    selected_edge_idx = random.choice(select_list)
-    select_list.remove(selected_edge_idx)
+    if type == 'normal':
+      reduction = False
+      selected_edge_idx = random.choice(select_normal)
+      select_normal.remove(selected_edge_idx)
+      logging.info('select_list: {}, choice:{}'.format(select_normal, selected_edge_idx))
+
+    elif type == 'reduce':
+      reduction = True
+      selected_edge_idx = random.choice(select_reduce)
+      select_reduce.remove(selected_edge_idx)
+      logging.info('select_list: {}, choice:{}'.format(select_reduce, selected_edge_idx))
+    else:
+      raise Exception('Unknown Cell Type')
 
     selected_op_idx = torch.argmax(probs[selected_edge_idx]) + 1 # add 1 since none op
     selected_idxs[selected_edge_idx] = selected_op_idx
 
     candidate_flags[selected_edge_idx] = False
     alphas[selected_edge_idx].requires_grad = False
-    if type == 'normal':
-      reduction = False
-    elif type == 'reduce':
-      reduction = True
-    else:
-      raise Exception('Unknown Cell Type')
     candidate_flags, selected_idxs = model.check_edges(candidate_flags,
                                                        selected_idxs,
                                                        reduction=reduction)
