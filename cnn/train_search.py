@@ -65,6 +65,7 @@ logging.getLogger().addHandler(fh)
 writer = SummaryWriter(log_dir=args.save, max_queue=50)
 
 CIFAR_CLASSES = 10
+select_list = [i for i in range(14)]
 
 def histogram_average(history, probs):
   histogram_inter = torch.zeros(probs.shape[0], dtype=torch.float).cuda()
@@ -117,8 +118,11 @@ def edge_decision(type, alphas, selected_idxs, candidate_flags, probs_history, e
                               (2 * candidate_flags.float() - 1) * np.inf)
 
     # cut strategy
-    selected_edge_idx = torch.argmax(masked_score)
+    # selected_edge_idx = torch.argmax(masked_score)
     # selected_edge_idx = random.randint(0, 13)
+    selected_edge_idx = random.choice(select_list)
+    select_list.remove(selected_edge_idx)
+
     selected_op_idx = torch.argmax(probs[selected_edge_idx]) + 1 # add 1 since none op
     selected_idxs[selected_edge_idx] = selected_op_idx
 
